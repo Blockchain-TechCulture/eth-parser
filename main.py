@@ -18,6 +18,9 @@ config = dotenv_values('.env')
 
 NETWORK = config['NETWORK']
 
+if NETWORK not in ['ERC20', 'BEP20']:
+    raise Exception('Wrong network provided')
+
 KAFKA_TOPIC = config['KAFKA_TX_TOPIC']
 
 log_name = f'{NETWORK.lower()}_parser'
