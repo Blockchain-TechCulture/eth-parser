@@ -10,9 +10,13 @@
 4. `docker-compose build`
 5. `docker-compose up -d`
 
+* If you're launching parser with _Docker_ and using _Redis_ or _Kafka_ on the same server make sure to configure network in _compose_ file
+
 ## Network select
 
 To use parser in eth or bnb networks simple change `NETWORK` credential settings:
+
+## Description
 
 | variable        | description                                       |
 |-----------------|---------------------------------------------------|
