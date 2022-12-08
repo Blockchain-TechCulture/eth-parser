@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import logging
 from logging.handlers import RotatingFileHandler
@@ -7,27 +8,31 @@ from time import sleep, time
 from eth_abi.exceptions import NonEmptyPaddingBytes
 from kafka import KafkaProducer
 from redis import Redis
-from dotenv import dotenv_values
 from web3 import Web3
 from web3.exceptions import BlockNotFound
 from web3.middleware import geth_poa_middleware
 from web3.types import TxData
 
 
-config = dotenv_values('.env')
-
-NETWORK = config['NETWORK']
-
+NETWORK=os.getenv('NETWORK')
 if NETWORK not in ['ERC20', 'BEP20']:
     raise Exception('Wrong network provided')
+KAFKA_TOPIC=os.getenv('KAFKA_TX_TOPIC')
+BASE_DIR=os.getenv('BASE_DIR')
+REDIS_HOST=os.getenv('REDIS_HOST')
+REDIS_PORT=int(os.getenv('REDIS_PORT', 6379))
+KAFKA_URLS=os.getenv('KAFKA_URL').split(',')
+TESTNET=os.getenv('TESTNET').lower() in ('true', '1', 't')
+RPC_TESTNET_URL=os.getenv('RPC_TESTNET_URL')
+RPC_PROD_URL=os.getenv('RPC_URL')
+RPC_URL= RPC_TESTNET_URL if TESTNET else RPC_PROD_URL
 
-KAFKA_TOPIC = config['KAFKA_TX_TOPIC']
 
 log_name = f'{NETWORK.lower()}_parser'
 logging.basicConfig(
     handlers=[
         logging.StreamHandler(),
-        RotatingFileHandler(config['BASE_DIR'] + f'/logs/{log_name}.log', maxBytes=20000 * 15000, backupCount=10)
+        RotatingFileHandler(BASE_DIR + f'/logs/{log_name}.log', maxBytes=20000 * 15000, backupCount=10)
     ],
     level=logging.INFO,
     format='[%(asctime)s] [%(pathname)s:%(lineno)d] [%(levelname)s] - %(message)s',
@@ -35,20 +40,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(log_name)
 
-abi_path = Path(config['BASE_DIR'] , 'abi', f'{NETWORK.lower()}_abi.json')
+abi_path = Path(BASE_DIR , 'abi', f'{NETWORK.lower()}_abi.json')
 with open(abi_path) as abi_file:
     abi = json.loads(abi_file.read())
 
-tokens_path = Path(config['BASE_DIR'] , 'token_list.json')
+tokens_path = Path(BASE_DIR , 'token_list.json')
 with open(tokens_path) as token_file:
     tokens = json.loads(token_file.read())
 
-r = Redis(host=config['REDIS_HOST'], port=int(config['REDIS_PORT']))
-servers = config['KAFKA_URL'].split(',')
-producer = KafkaProducer(bootstrap_servers=servers, value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-
-network_testnet = config['TESTNET'].lower() in ('true', '1', 't')
-RPC_URL= config['RPC_TESTNET_URL'] if network_testnet else config['RPC_URL']
+r = Redis(host=REDIS_HOST, port=REDIS_PORT)
+producer = KafkaProducer(bootstrap_servers=KAFKA_URLS, value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 
 
 class Worker:
