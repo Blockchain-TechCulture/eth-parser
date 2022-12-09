@@ -32,6 +32,8 @@ dev_deploy:
    stage: deploy
    tags:
      - dev
+   script:
+     - echo "Nothing"
 
 
 prod_deploy:
@@ -40,3 +42,5 @@ prod_deploy:
    stage: deploy
    tags:
      - builder
+   script:
+     - echo "Nothing"
