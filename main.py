@@ -7,7 +7,7 @@ from time import sleep, time
 
 from eth_abi.exceptions import NonEmptyPaddingBytes
 from kafka import KafkaProducer
-from redis import Redis
+from redis import Redis, RedisCluster
 from web3 import Web3
 from web3.exceptions import BlockNotFound
 from web3.middleware import geth_poa_middleware
@@ -48,7 +48,9 @@ tokens_path = Path(BASE_DIR , 'token_list.json')
 with open(tokens_path) as token_file:
     tokens = json.loads(token_file.read())
 
-r = Redis(host=REDIS_HOST, port=REDIS_PORT)
+# r = Redis(host=REDIS_HOST, port=REDIS_PORT)
+r = RedisCluster(host=REDIS_HOST, port=REDIS_PORT) # use this to cluster mode
+
 producer = KafkaProducer(bootstrap_servers=KAFKA_URLS, value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 
 
