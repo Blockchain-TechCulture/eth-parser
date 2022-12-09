@@ -1,13 +1,7 @@
 FROM python:3.9-alpine3.16
-ENV APP_HOME=/home/app
-RUN mkdir -p $APP_HOME
-
+WORKDIR /home/app
 RUN apk update && apk add --no-cache bash
 RUN apk --no-cache --update add build-base
-
-COPY ./ $APP_HOME
-RUN pip install -r $APP_HOME/requirements.txt; mkdir -p $APP_HOME/logs;
-COPY .env $APP_HOME
-
-WORKDIR $APP_HOME
+COPY . .
+RUN pip install -r requirements.txt
 CMD ["python3", "main.py"]
