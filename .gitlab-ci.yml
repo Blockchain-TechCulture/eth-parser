@@ -7,7 +7,7 @@ dev_image-build:
    - develop
   stage: build
   tags:
-    - builder
+    - dev
   script:
     - aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 895812715899.dkr.ecr.eu-central-1.amazonaws.com
     - docker build -t 895812715899.dkr.ecr.eu-central-1.amazonaws.com/bitocol-eth-parser:$CI_COMMIT_BRANCH$CI_PIPELINE_IID .
@@ -21,10 +21,8 @@ prod_image-build:
     - builder
   script:
     - aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 895812715899.dkr.ecr.eu-central-1.amazonaws.com
-    - docker build -t 895812715899.dkr.ecr.eu-central-1.amazonaws.com/btc-eth-parser:$CI_COMMIT_BRANCH$CI_PIPELINE_IID .
-    - docker push 895812715899.dkr.ecr.eu-central-1.amazonaws.com/btc-eth-parser:$CI_COMMIT_BRANCH$CI_PIPELINE_IID
-
-
+    - docker build -t 895812715899.dkr.ecr.eu-central-1.amazonaws.com/bitocol-eth-parser:$CI_COMMIT_BRANCH$CI_PIPELINE_IID .
+    - docker push 895812715899.dkr.ecr.eu-central-1.amazonaws.com/bitocol-eth-parser:$CI_COMMIT_BRANCH$CI_PIPELINE_IID
 
 dev_deploy:
    only:
@@ -33,9 +31,10 @@ dev_deploy:
    tags:
      - dev
    script:
-     - echo "Nothing"
-
-
+     - aws ecr get-login-password --region eu-central-1 | sudo docker login --username AWS --password-stdin 895812715899.dkr.ecr.eu-central-1.amazonaws.com
+     - sudo docker stop eth-parser && sudo docker rm eth-parser
+     - sudo docker run --name eth-parser -d 895812715899.dkr.ecr.eu-central-1.amazonaws.com/bitocol-eth-parser:$CI_COMMIT_BRANCH$CI_PIPELINE_IID
+     
 prod_deploy:
    only:
      - master
@@ -43,4 +42,5 @@ prod_deploy:
    tags:
      - builder
    script:
-     - echo "Nothing"
+     - aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 895812715899.dkr.ecr.eu-central-1.amazonaws.com
+     - sed 's/TAG/$CI_COMMIT_BRANCH$CI_PIPELINE_IID/g' k8s/deployment.yaml | kubectl apply -f -
